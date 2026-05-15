@@ -1,0 +1,223 @@
+<html>
+    </style>
+</head>
+<body>
+
+<h1>IPL Fantasy 2026 Complete Analytics Dashboard</h1>
+
+<div class="controls">
+    <h3>Select Teams For Comparison</h3>
+
+    <button onclick="selectAllTeams()">All Teams</button>
+    <button onclick="selectTop5()">Top 5 Teams</button>
+    <button onclick="clearTeams()">Clear Selection</button>
+
+    <div id="teamContainer" class="team-grid"></div>
+</div>
+
+<div id="loading" class="loading">Loading Google Sheet data...</div>
+
+<div id="pointsChart" class="chart"></div>
+<div id="subsChart" class="chart"></div>
+<div id="playersChart" class="chart"></div>
+<div id="barChart" class="chart"></div>
+<div id="captainChart" class="chart"></div>
+<div id="viceChart" class="chart"></div>
+<div id="combinedChart" class="chart"></div>
+
+<script>
+
+const SHEET_ID = '1d0vJWMrF3BFom02mBAzaYZEsx8qUq0wEEw9F64zzN8s';
+
+const GAME_TOTAL_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Game_Total`;
+const C_VC_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=C_VC`;
+
+let games = [];
+let teams = [];
+let top5 = [];
+
+let pointsData = {};
+let subsData = {};
+let playersData = {};
+let captainData = {};
+let viceData = {};
+let combinedData = {};
+
+async function fetchCSV(url) {
+    const response = await fetch(url);
+    const text = await response.text();
+
+    return text
+        .trim()
+        .split('\n')
+        .map(row => row.split(','));
+}
+
+function cumulativeArray(arr) {
+    updateCharts();
+}
+
+function selectTop5() {
+
+    document.querySelectorAll('.team-checkbox').forEach(cb => {
+        cb.checked = top5.includes(cb.value);
+    });
+
+    updateCharts();
+}
+
+function clearTeams() {
+
+    document.querySelectorAll('.team-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+
+    updateCharts();
+}
+
+function createLineTrace(team, values) {
+
+    return {
+        x: games,
+        y: values,
+        mode: 'lines+markers',
+        name: team,
+
+        line: {
+            shape: 'spline',
+            smoothing: 1.2,
+            width: 3
+        },
+
+        marker: {
+            size: 7
+        }
+    };
+}
+
+function createBarTrace(team, values) {
+
+    return {
+        x: games,
+        y: values,
+        type: 'bar',
+        name: team
+    };
+}
+
+function renderLineChart(divId, title, yTitle, traces) {
+
+    Plotly.newPlot(divId, traces, {
+
+        title,
+
+        xaxis: {
+            title: 'Games'
+        },
+
+        yaxis: {
+            title: yTitle
+        },
+
+        hovermode: 'x unified',
+
+        height: 500,
+
+        legend: {
+            orientation: 'h'
+        }
+    });
+}
+
+function updateCharts() {
+    renderLineChart(
+        'pointsChart',
+        'Cumulative Total Points',
+        'Points',
+        selectedTeams.map(team =>
+            createLineTrace(team, pointsData[team])
+        )
+    );
+
+    // Subs
+    renderLineChart(
+        'subsChart',
+        'Cumulative Total Subs Used',
+        'Subs',
+        selectedTeams.map(team =>
+            createLineTrace(team, subsData[team])
+        )
+    );
+
+    // Players
+    renderLineChart(
+        'playersChart',
+        'Players Played Per Game',
+        'Players',
+        selectedTeams.map(team =>
+            createLineTrace(team, playersData[team])
+        )
+    );
+
+    // Grouped bar
+    Plotly.newPlot(
+        'barChart',
+
+        selectedTeams.map(team =>
+            createBarTrace(team, playersData[team])
+        ),
+
+        {
+            title: 'Exact Per-Game Player Comparison',
+
+            barmode: 'group',
+
+            xaxis: {
+                title: 'Games'
+            },
+
+            yaxis: {
+                title: 'Players'
+            },
+
+            height: 600
+        }
+    );
+
+    // Captain
+    renderLineChart(
+        'captainChart',
+        'Captain Points Per Game',
+        'Captain Points',
+        selectedTeams.map(team =>
+            createLineTrace(team, captainData[team])
+        )
+    );
+
+    // Vice Captain
+    renderLineChart(
+        'viceChart',
+        'Vice Captain Points Per Game',
+        'Vice Captain Points',
+        selectedTeams.map(team =>
+            createLineTrace(team, viceData[team])
+        )
+    );
+
+    // Combined
+    renderLineChart(
+        'combinedChart',
+        'Captain + Vice Captain Combined Points',
+        'Combined Points',
+        selectedTeams.map(team =>
+            createLineTrace(team, combinedData[team])
+        )
+    );
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
