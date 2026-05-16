@@ -1,47 +1,100 @@
 <!DOCTYPE html>
-        }
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Fantasy 2026 Dashboard</title>
 
-        button:hover {
-            background: #125ea7;
-        }
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-        .loading {
-            text-align: center;
-            font-size: 18px;
-            margin-top: 50px;
-        }
-    </style>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+h1{
+    text-align:center;
+}
+.panel{
+    background:white;
+    padding:18px;
+    border-radius:12px;
+    margin-bottom:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+.chart{
+    height:550px;
+}
+.team-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:8px;
+    margin-top:15px;
+}
+button{
+    padding:10px 14px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#1976d2;
+    color:white;
+    margin-right:10px;
+}
+button:hover{
+    background:#1258a8;
+}
+#status{
+    font-weight:bold;
+    margin-top:10px;
+}
+.error{
+    color:red;
+}
+.success{
+    color:green;
+}
+</style>
 </head>
+
 <body>
 
-<h1>IPL Fantasy 2026 Complete Analytics Dashboard</h1>
+<h1>IPL Fantasy 2026 Analytics Dashboard</h1>
 
-<div class="controls">
-    <h3>Select Teams For Comparison</h3>
+<div class="panel">
+
+    <h3>Team Filters</h3>
 
     <button onclick="selectAllTeams()">All Teams</button>
     <button onclick="selectTop5()">Top 5 Teams</button>
     <button onclick="clearTeams()">Clear Selection</button>
+    <button onclick="reloadDashboard()">Reload Data</button>
+
+    <div id="status">Loading Google Sheet data...</div>
 
     <div id="teamContainer" class="team-grid"></div>
+
 </div>
 
-<div id="loading" class="loading">Loading Google Sheet data...</div>
-
-<div id="pointsChart" class="chart"></div>
-<div id="subsChart" class="chart"></div>
-<div id="playersChart" class="chart"></div>
-<div id="barChart" class="chart"></div>
-<div id="captainChart" class="chart"></div>
-<div id="viceChart" class="chart"></div>
-<div id="combinedChart" class="chart"></div>
+<div class="panel"><div id="pointsChart" class="chart"></div></div>
+<div class="panel"><div id="subsChart" class="chart"></div></div>
+<div class="panel"><div id="playersChart" class="chart"></div></div>
+<div class="panel"><div id="barChart" class="chart"></div></div>
+<div class="panel"><div id="captainChart" class="chart"></div></div>
+<div class="panel"><div id="viceChart" class="chart"></div></div>
+<div class="panel"><div id="combinedChart" class="chart"></div></div>
 
 <script>
 
 const SHEET_ID = '1d0vJWMrF3BFom02mBAzaYZEsx8qUq0wEEw9F64zzN8s';
 
-const GAME_TOTAL_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Game_Total`;
-const C_VC_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=C_VC`;
+const GAME_TOTAL_URL =
+`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Game_Total`;
+
+const CVC_URL =
+`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=C_VC`;
 
 let games = [];
 let teams = [];
@@ -54,61 +107,165 @@ let captainData = {};
 let viceData = {};
 let combinedData = {};
 
-async function fetchCSV(url) {
-    const response = await fetch(url);
-    const text = await response.text();
-
-    return text
-        .trim()
-        .split('\n')
-        .map(row => row.split(','));
+function setStatus(msg, cls='') {
+    const el = document.getElementById('status');
+    el.innerText = msg;
+    el.className = cls;
 }
 
-function cumulativeArray(arr) {
-    let total = 0;
-    return arr.map(x => total += Number(x || 0));
-}
+async function fetchCSV(url){
 
-function extractGameColumns(headers, suffix) {
-
-        if (!team) continue;
-
-        const captain = captainCols.map(c => Number(row[c.index] || 0));
-        const vice = viceCols.map(c => Number(row[c.index] || 0));
-
-        captainData[team] = captain;
-        viceData[team] = vice;
-        combinedData[team] = captain.map((v, idx) => v + vice[idx]);
-    }
-
-    calculateTop5();
-    createTeamCheckboxes();
-    updateCharts();
-
-    document.getElementById('loading').style.display = 'none';
-}
-
-function calculateTop5() {
-
-    const totals = [];
-
-    teams.forEach(team => {
-        const finalScore = pointsData[team][pointsData[team].length - 1] || 0;
-
-        totals.push({
-            team,
-            score: finalScore
-        });
+    const response = await fetch(url, {
+        method:'GET',
+        mode:'cors',
+        cache:'no-cache'
     });
 
-    totals.sort((a, b) => b.score - a.score);
+    if(!response.ok){
+        throw new Error('Failed to fetch Google Sheet');
+    }
 
-    top5 = totals.slice(0, 5).map(x => x.team);
+    const text = await response.text();
+
+    return Papa.parse(text.trim(), {
+        header:false,
+        skipEmptyLines:true
+    }).data;
 }
 
-function createTeamCheckboxes() {
+function cumulative(arr){
+    let total = 0;
+    return arr.map(v => total += Number(v || 0));
+}
+
+function extractColumns(headers, keyword){
+
+    const cols = [];
+
+    headers.forEach((h, idx) => {
+
+        if(!h) return;
+
+        if(h.includes(keyword)){
+
+            const match = h.match(/G(\d+)/);
+
+            if(match){
+
+                cols.push({
+                    game:Number(match[1]),
+                    index:idx
+                });
+            }
+        }
+    });
+
+    cols.sort((a,b)=>a.game-b.game);
+
+    return cols;
+}
+
+function safeNumber(v){
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+}
+
+async function loadData(){
+
+    try{
+
+        setStatus('Loading Google Sheet data...');
+
+        const gameCsv = await fetchCSV(GAME_TOTAL_URL);
+        const cvcCsv = await fetchCSV(CVC_URL);
+
+        const gameHeaders = gameCsv[0];
+        const cvcHeaders = cvcCsv[0];
+
+        const totalCols = extractColumns(gameHeaders, 'Total');
+        const subsCols = extractColumns(gameHeaders, 'Subs');
+        const playerCols = extractColumns(gameHeaders, 'Players');
+
+        const captainCols = extractColumns(cvcHeaders, ' C');
+        const viceCols = extractColumns(cvcHeaders, 'VC');
+
+        games = totalCols.map(c => `G${c.game}`);
+
+        pointsData = {};
+        subsData = {};
+        playersData = {};
+        captainData = {};
+        viceData = {};
+        combinedData = {};
+        teams = [];
+
+        // Game totals sheet
+        for(let i=1;i<gameCsv.length;i++){
+
+            const row = gameCsv[i];
+            const team = row[0];
+
+            if(!team) continue;
+
+            teams.push(team);
+
+            const totals = totalCols.map(c => safeNumber(row[c.index]));
+            const subs = subsCols.map(c => safeNumber(row[c.index]));
+            const players = playerCols.map(c => safeNumber(row[c.index]));
+
+            pointsData[team] = cumulative(totals);
+            subsData[team] = cumulative(subs);
+            playersData[team] = players;
+        }
+
+        // CVC sheet
+        for(let i=1;i<cvcCsv.length;i++){
+
+            const row = cvcCsv[i];
+            const team = row[0];
+
+            if(!team) continue;
+
+            const captain = captainCols.map(c => safeNumber(row[c.index]));
+            const vice = viceCols.map(c => safeNumber(row[c.index]));
+
+            captainData[team] = captain;
+            viceData[team] = vice;
+            combinedData[team] =
+                captain.map((v, idx) => v + (vice[idx] || 0));
+        }
+
+        calculateTop5();
+        renderTeamCheckboxes();
+        updateCharts();
+
+        setStatus('Dashboard loaded successfully', 'success');
+
+    }catch(err){
+
+        console.error(err);
+
+        setStatus(
+            'Failed to load Google Sheet data. Ensure sheet is public: "Anyone with link can view". Also open dashboard using VS Code Live Server.',
+            'error'
+        );
+    }
+}
+
+function calculateTop5(){
+
+    top5 = Object.keys(pointsData)
+        .sort((a,b)=>
+            (pointsData[b].slice(-1)[0] || 0) -
+            (pointsData[a].slice(-1)[0] || 0)
+        )
+        .slice(0,5);
+}
+
+function renderTeamCheckboxes(){
 
     const container = document.getElementById('teamContainer');
+    container.innerHTML = '';
 
     teams.forEach(team => {
 
@@ -127,117 +284,147 @@ function createTeamCheckboxes() {
     });
 }
 
-function getSelectedTeams() {
+function getSelectedTeams(){
 
-    return Array.from(
-        document.querySelectorAll('.team-checkbox:checked')
-    ).map(cb => cb.value);
+    return [...document.querySelectorAll('.team-checkbox:checked')]
+        .map(cb => cb.value);
 }
 
-function selectAllTeams() {
+function selectAllTeams(){
 
-    document.querySelectorAll('.team-checkbox').forEach(cb => {
-        cb.checked = true;
-    });
+    document.querySelectorAll('.team-checkbox')
+        .forEach(cb => cb.checked = true);
 
     updateCharts();
 }
 
-function selectTop5() {
+function selectTop5(){
 
-        legend: {
-            orientation: 'h'
-        }
-    });
+    document.querySelectorAll('.team-checkbox')
+        .forEach(cb => {
+            cb.checked = top5.includes(cb.value);
+        });
+
+    updateCharts();
 }
 
-function updateCharts() {
+function clearTeams(){
 
-    const selectedTeams = getSelectedTeams();
+    document.querySelectorAll('.team-checkbox')
+        .forEach(cb => cb.checked = false);
 
-    // Points
+    updateCharts();
+}
+
+function reloadDashboard(){
+    loadData();
+}
+
+function lineTrace(team, values){
+
+    return {
+        x: games,
+        y: values,
+        mode:'lines+markers',
+        name:team,
+        line:{
+            shape:'spline',
+            smoothing:1.2,
+            width:3
+        },
+        marker:{
+            size:7
+        }
+    };
+}
+
+function barTrace(team, values){
+
+    return {
+        x: games,
+        y: values,
+        type:'bar',
+        name:team
+    };
+}
+
+function renderLineChart(id, title, yTitle, traces){
+
+    Plotly.react(id, traces, {
+
+        title,
+        hovermode:'x unified',
+
+        xaxis:{
+            title:'Games'
+        },
+
+        yaxis:{
+            title:yTitle
+        },
+
+        legend:{
+            orientation:'h'
+        }
+    }, {responsive:true});
+}
+
+function updateCharts(){
+
+    const selected = getSelectedTeams();
+
     renderLineChart(
         'pointsChart',
         'Cumulative Total Points',
         'Points',
-        selectedTeams.map(team =>
-            createLineTrace(team, pointsData[team])
-        )
+        selected.map(t => lineTrace(t, pointsData[t] || []))
     );
 
-    // Subs
     renderLineChart(
         'subsChart',
-        'Cumulative Total Subs Used',
+        'Cumulative Subs Used',
         'Subs',
-        selectedTeams.map(team =>
-            createLineTrace(team, subsData[team])
-        )
+        selected.map(t => lineTrace(t, subsData[t] || []))
     );
 
-    // Players
     renderLineChart(
         'playersChart',
         'Players Played Per Game',
         'Players',
-        selectedTeams.map(team =>
-            createLineTrace(team, playersData[team])
-        )
+        selected.map(t => lineTrace(t, playersData[t] || []))
     );
 
-    // Grouped bar
-    Plotly.newPlot(
+    Plotly.react(
         'barChart',
-
-        selectedTeams.map(team =>
-            createBarTrace(team, playersData[team])
-        ),
-
+        selected.map(t => barTrace(t, playersData[t] || [])),
         {
-            title: 'Exact Per-Game Player Comparison',
-
-            barmode: 'group',
-
-            xaxis: {
-                title: 'Games'
-            },
-
-            yaxis: {
-                title: 'Players'
-            },
-
-            height: 600
-        }
+            title:'Exact Per-Game Player Comparison',
+            barmode:'group',
+            xaxis:{title:'Games'},
+            yaxis:{title:'Players'}
+        },
+        {responsive:true}
     );
 
-    // Captain
     renderLineChart(
         'captainChart',
         'Captain Points Per Game',
         'Captain Points',
-        selectedTeams.map(team =>
-            createLineTrace(team, captainData[team])
-        )
+        selected.map(t => lineTrace(t, captainData[t] || []))
     );
 
-    // Vice Captain
     renderLineChart(
         'viceChart',
         'Vice Captain Points Per Game',
         'Vice Captain Points',
-        selectedTeams.map(team =>
-            createLineTrace(team, viceData[team])
-        )
+        selected.map(t => lineTrace(t, viceData[t] || []))
     );
 
-    // Combined
     renderLineChart(
         'combinedChart',
         'Captain + Vice Captain Combined Points',
         'Combined Points',
-        selectedTeams.map(team =>
-            createLineTrace(team, combinedData[team])
-        )
+        selected.map(t => lineTrace(t, combinedData[t] || []))
     );
 }
 
