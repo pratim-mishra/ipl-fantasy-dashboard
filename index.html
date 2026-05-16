@@ -1,39 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IPL Fantasy 2026 Dashboard</title>
+<title>IPL Fantasy 2026 Complete Dashboard</title>
 
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 body{
-    font-family:Arial,sans-serif;
+    font-family:Arial;
     background:#f4f6f9;
     margin:0;
     padding:20px;
 }
-h1{
+
+h1,h2{
     text-align:center;
 }
+
 .panel{
     background:white;
     padding:18px;
     border-radius:12px;
     margin-bottom:20px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
 }
+
 .chart{
     height:550px;
 }
+
 .team-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
     gap:8px;
     margin-top:15px;
 }
+
 button{
     padding:10px 14px;
     border:none;
@@ -43,48 +48,67 @@ button{
     color:white;
     margin-right:10px;
 }
+
 button:hover{
     background:#1258a8;
 }
-#status{
-    font-weight:bold;
-    margin-top:10px;
+
+.grid2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
 }
-.error{
-    color:red;
-}
-.success{
-    color:green;
-}
+
 </style>
 </head>
 
 <body>
 
-<h1>IPL Fantasy 2026 Analytics Dashboard</h1>
+<h1>IPL Fantasy 2026 Complete Analytics Dashboard</h1>
 
 <div class="panel">
 
-    <h3>Team Filters</h3>
+<h3>Team Filters</h3>
 
-    <button onclick="selectAllTeams()">All Teams</button>
-    <button onclick="selectTop5()">Top 5 Teams</button>
-    <button onclick="clearTeams()">Clear Selection</button>
-    <button onclick="reloadDashboard()">Reload Data</button>
+<button onclick="selectAllTeams()">All Teams</button>
+<button onclick="selectTop5()">Top 5 Teams</button>
+<button onclick="clearTeams()">Clear Selection</button>
+<button onclick="reloadDashboard()">Reload Dashboard</button>
 
-    <div id="status">Loading Google Sheet data...</div>
+<div id="status">Loading dashboard...</div>
 
-    <div id="teamContainer" class="team-grid"></div>
+<div id="teamContainer" class="team-grid"></div>
 
 </div>
 
 <div class="panel"><div id="pointsChart" class="chart"></div></div>
 <div class="panel"><div id="subsChart" class="chart"></div></div>
 <div class="panel"><div id="playersChart" class="chart"></div></div>
-<div class="panel"><div id="barChart" class="chart"></div></div>
+<div class="panel"><div id="playerBarChart" class="chart"></div></div>
 <div class="panel"><div id="captainChart" class="chart"></div></div>
 <div class="panel"><div id="viceChart" class="chart"></div></div>
 <div class="panel"><div id="combinedChart" class="chart"></div></div>
+
+<h2>Booster Analytics</h2>
+
+<div class="grid2">
+
+<div class="panel"><div id="doublePower1" class="chart"></div></div>
+<div class="panel"><div id="doublePower2" class="chart"></div></div>
+
+<div class="panel"><div id="foreignStars1" class="chart"></div></div>
+<div class="panel"><div id="foreignStars2" class="chart"></div></div>
+
+<div class="panel"><div id="indianWarriors1" class="chart"></div></div>
+<div class="panel"><div id="indianWarriors2" class="chart"></div></div>
+
+<div class="panel"><div id="tripleCaptain1" class="chart"></div></div>
+<div class="panel"><div id="tripleCaptain2" class="chart"></div></div>
+
+<div class="panel"><div id="freeHit" class="chart"></div></div>
+<div class="panel"><div id="wildCard" class="chart"></div></div>
+
+</div>
 
 <script>
 
@@ -95,6 +119,9 @@ const GAME_TOTAL_URL =
 
 const CVC_URL =
 `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=C_VC`;
+
+const OVERALL_URL =
+`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Overall`;
 
 let games = [];
 let teams = [];
@@ -107,19 +134,42 @@ let captainData = {};
 let viceData = {};
 let combinedData = {};
 
-function setStatus(msg, cls='') {
-    const el = document.getElementById('status');
-    el.innerText = msg;
-    el.className = cls;
-}
+let boosterData = {};
+
+const boosterChartConfig = {
+
+    'Double Power':[
+        {id:'doublePower1', label:'Double Power 1', color:'#1f77b4'},
+        {id:'doublePower2', label:'Double Power 2', color:'#4fa3ff'}
+    ],
+
+    'Foreign Stars':[
+        {id:'foreignStars1', label:'Foreign Stars 1', color:'#ff7f0e'},
+        {id:'foreignStars2', label:'Foreign Stars 2', color:'#ffb266'}
+    ],
+
+    'Indian Warriors':[
+        {id:'indianWarriors1', label:'Indian Warriors 1', color:'#2ca02c'},
+        {id:'indianWarriors2', label:'Indian Warriors 2', color:'#7bd67b'}
+    ],
+
+    'Triple Captain':[
+        {id:'tripleCaptain1', label:'Triple Captain 1', color:'#d62728'},
+        {id:'tripleCaptain2', label:'Triple Captain 2', color:'#ff7a7a'}
+    ],
+
+    'Free Hit':[
+        {id:'freeHit', label:'Free Hit', color:'#9467bd'}
+    ],
+
+    'Wild Card':[
+        {id:'wildCard', label:'Wild Card', color:'#8c564b'}
+    ]
+};
 
 async function fetchCSV(url){
 
-    const response = await fetch(url, {
-        method:'GET',
-        mode:'cors',
-        cache:'no-cache'
-    });
+    const response = await fetch(url);
 
     if(!response.ok){
         throw new Error('Failed to fetch Google Sheet');
@@ -128,13 +178,14 @@ async function fetchCSV(url){
     const text = await response.text();
 
     return Papa.parse(text.trim(), {
-        header:false,
         skipEmptyLines:true
     }).data;
 }
 
 function cumulative(arr){
+
     let total = 0;
+
     return arr.map(v => total += Number(v || 0));
 }
 
@@ -144,9 +195,7 @@ function extractColumns(headers, keyword){
 
     headers.forEach((h, idx) => {
 
-        if(!h) return;
-
-        if(h.includes(keyword)){
+        if(h && h.includes(keyword)){
 
             const match = h.match(/G(\d+)/);
 
@@ -165,106 +214,106 @@ function extractColumns(headers, keyword){
     return cols;
 }
 
-function safeNumber(v){
+function safe(v){
+
     const n = parseFloat(v);
+
     return isNaN(n) ? 0 : n;
 }
 
-async function loadData(){
+function initializeBoosterData(){
 
-    try{
-
-        setStatus('Loading Google Sheet data...');
-
-        const gameCsv = await fetchCSV(GAME_TOTAL_URL);
-        const cvcCsv = await fetchCSV(CVC_URL);
-
-        const gameHeaders = gameCsv[0];
-        const cvcHeaders = cvcCsv[0];
-
-        const totalCols = extractColumns(gameHeaders, 'Total');
-        const subsCols = extractColumns(gameHeaders, 'Subs');
-        const playerCols = extractColumns(gameHeaders, 'Players');
-
-        const captainCols = extractColumns(cvcHeaders, ' C');
-        const viceCols = extractColumns(cvcHeaders, 'VC');
-
-        games = totalCols.map(c => `G${c.game}`);
-
-        pointsData = {};
-        subsData = {};
-        playersData = {};
-        captainData = {};
-        viceData = {};
-        combinedData = {};
-        teams = [];
-
-        // Game totals sheet
-        for(let i=1;i<gameCsv.length;i++){
-
-            const row = gameCsv[i];
-            const team = row[0];
-
-            if(!team) continue;
-
-            teams.push(team);
-
-            const totals = totalCols.map(c => safeNumber(row[c.index]));
-            const subs = subsCols.map(c => safeNumber(row[c.index]));
-            const players = playerCols.map(c => safeNumber(row[c.index]));
-
-            pointsData[team] = cumulative(totals);
-            subsData[team] = cumulative(subs);
-            playersData[team] = players;
-        }
-
-        // CVC sheet
-        for(let i=1;i<cvcCsv.length;i++){
-
-            const row = cvcCsv[i];
-            const team = row[0];
-
-            if(!team) continue;
-
-            const captain = captainCols.map(c => safeNumber(row[c.index]));
-            const vice = viceCols.map(c => safeNumber(row[c.index]));
-
-            captainData[team] = captain;
-            viceData[team] = vice;
-            combinedData[team] =
-                captain.map((v, idx) => v + (vice[idx] || 0));
-        }
-
-        calculateTop5();
-        renderTeamCheckboxes();
-        updateCharts();
-
-        setStatus('Dashboard loaded successfully', 'success');
-
-    }catch(err){
-
-        console.error(err);
-
-        setStatus(
-            'Failed to load Google Sheet data. Ensure sheet is public: "Anyone with link can view". Also open dashboard using VS Code Live Server.',
-            'error'
-        );
-    }
+    Object.keys(boosterChartConfig)
+        .forEach(name => {
+            boosterData[name] = {};
+        });
 }
 
-function calculateTop5(){
+function parseBoosterString(team, text){
 
-    top5 = Object.keys(pointsData)
-        .sort((a,b)=>
-            (pointsData[b].slice(-1)[0] || 0) -
-            (pointsData[a].slice(-1)[0] || 0)
-        )
-        .slice(0,5);
+    if(!text) return;
+
+    const entries = text.split('|');
+
+    entries.forEach(entry => {
+
+        const match =
+            entry.trim().match(/(.+?)\s*\((.+)\)/);
+
+        if(!match) return;
+
+        const booster = match[1].trim();
+
+        if(!boosterData[booster]){
+            boosterData[booster] = {};
+        }
+
+        if(!boosterData[booster][team]){
+            boosterData[booster][team] = [];
+        }
+
+        const gameEntries = match[2].split(',');
+
+        gameEntries.forEach(g => {
+
+            const gm =
+                g.trim().match(/(G\d+)\s*:\s*([\d\.]+)/);
+
+            if(!gm) return;
+
+            boosterData[booster][team].push({
+                game:gm[1],
+                points:parseFloat(gm[2])
+            });
+        });
+    });
 }
 
-function renderTeamCheckboxes(){
+function lineTrace(team, values){
+
+    return {
+        x:games,
+        y:values,
+        mode:'lines+markers',
+        name:team,
+        line:{
+            shape:'spline',
+            smoothing:1.2,
+            width:3
+        },
+        marker:{
+            size:7
+        }
+    };
+}
+
+function renderLineChart(id, title, yTitle, traces){
+
+    Plotly.react(id, traces, {
+
+        title,
+
+        hovermode:'x unified',
+
+        xaxis:{
+            title:'Games'
+        },
+
+        yaxis:{
+            title:yTitle
+        },
+
+        legend:{
+            orientation:'h'
+        }
+
+    }, {responsive:true});
+}
+
+function createTeamCheckboxes(){
 
     const container = document.getElementById('teamContainer');
+
     container.innerHTML = '';
 
     teams.forEach(team => {
@@ -317,56 +366,7 @@ function clearTeams(){
 }
 
 function reloadDashboard(){
-    loadData();
-}
-
-function lineTrace(team, values){
-
-    return {
-        x: games,
-        y: values,
-        mode:'lines+markers',
-        name:team,
-        line:{
-            shape:'spline',
-            smoothing:1.2,
-            width:3
-        },
-        marker:{
-            size:7
-        }
-    };
-}
-
-function barTrace(team, values){
-
-    return {
-        x: games,
-        y: values,
-        type:'bar',
-        name:team
-    };
-}
-
-function renderLineChart(id, title, yTitle, traces){
-
-    Plotly.react(id, traces, {
-
-        title,
-        hovermode:'x unified',
-
-        xaxis:{
-            title:'Games'
-        },
-
-        yaxis:{
-            title:yTitle
-        },
-
-        legend:{
-            orientation:'h'
-        }
-    }, {responsive:true});
+    loadDashboard();
 }
 
 function updateCharts(){
@@ -383,7 +383,7 @@ function updateCharts(){
     renderLineChart(
         'subsChart',
         'Cumulative Subs Used',
-        'Subs',
+        'Subs Used',
         selected.map(t => lineTrace(t, subsData[t] || []))
     );
 
@@ -395,40 +395,238 @@ function updateCharts(){
     );
 
     Plotly.react(
-        'barChart',
-        selected.map(t => barTrace(t, playersData[t] || [])),
+        'playerBarChart',
+        selected.map(t => ({
+            x:games,
+            y:playersData[t] || [],
+            type:'bar',
+            name:t
+        })),
         {
             title:'Exact Per-Game Player Comparison',
-            barmode:'group',
-            xaxis:{title:'Games'},
-            yaxis:{title:'Players'}
+            barmode:'group'
         },
         {responsive:true}
     );
 
     renderLineChart(
         'captainChart',
-        'Captain Points Per Game',
+        'Captain Points',
         'Captain Points',
         selected.map(t => lineTrace(t, captainData[t] || []))
     );
 
     renderLineChart(
         'viceChart',
-        'Vice Captain Points Per Game',
         'Vice Captain Points',
+        'VC Points',
         selected.map(t => lineTrace(t, viceData[t] || []))
     );
 
     renderLineChart(
         'combinedChart',
-        'Captain + Vice Captain Combined Points',
+        'Captain + Vice Captain Combined',
         'Combined Points',
         selected.map(t => lineTrace(t, combinedData[t] || []))
     );
 }
 
-loadData();
+function createSingleBoosterChart(config, teams, values, games){
+
+    Plotly.react(
+
+        config.id,
+
+        [{
+
+            x:teams,
+
+            y:values,
+
+            type:'bar',
+
+            marker:{
+                color:config.color
+            },
+
+            text:games,
+
+            hovertemplate:
+                '<b>%{x}</b><br>' +
+                'Game: %{text}<br>' +
+                'Points: %{y}<extra></extra>'
+
+        }],
+
+        {
+            title:config.label,
+
+            xaxis:{
+                title:'Teams'
+            },
+
+            yaxis:{
+                title:'Booster Points'
+            }
+        },
+
+        {responsive:true}
+    );
+}
+
+function renderBoosterCharts(){
+
+    Object.keys(boosterChartConfig)
+        .forEach(booster => {
+
+            const configs = boosterChartConfig[booster];
+
+            configs.forEach((cfg, index) => {
+
+                const teamsArr = [];
+                const values = [];
+                const gamesArr = [];
+
+                Object.keys(boosterData[booster] || {})
+                    .forEach(team => {
+
+                        const entries = boosterData[booster][team];
+
+                        const item = entries[index];
+
+                        teamsArr.push(team);
+
+                        if(item){
+                            values.push(item.points);
+                            gamesArr.push(item.game);
+                        }else{
+                            values.push(0);
+                            gamesArr.push('-');
+                        }
+                    });
+
+                createSingleBoosterChart(
+                    cfg,
+                    teamsArr,
+                    values,
+                    gamesArr
+                );
+            });
+        });
+}
+
+async function loadDashboard(){
+
+    try{
+
+        document.getElementById('status')
+            .innerText = 'Loading Google Sheet data...';
+
+        initializeBoosterData();
+
+        const gameCsv = await fetchCSV(GAME_TOTAL_URL);
+        const cvcCsv = await fetchCSV(CVC_URL);
+        const overallCsv = await fetchCSV(OVERALL_URL);
+
+        const gameHeaders = gameCsv[0];
+        const cvcHeaders = cvcCsv[0];
+        const overallHeaders = overallCsv[0];
+
+        const totalCols = extractColumns(gameHeaders, 'Total');
+        const subsCols = extractColumns(gameHeaders, 'Subs');
+        const playerCols = extractColumns(gameHeaders, 'Players');
+
+        const captainCols = extractColumns(cvcHeaders, ' C');
+        const viceCols = extractColumns(cvcHeaders, 'VC');
+
+        const boosterCol =
+            overallHeaders.findIndex(h => h === 'Booster');
+
+        games = totalCols.map(c => `G${c.game}`);
+
+        pointsData = {};
+        subsData = {};
+        playersData = {};
+        captainData = {};
+        viceData = {};
+        combinedData = {};
+        teams = [];
+
+        for(let i=1;i<gameCsv.length;i++){
+
+            const row = gameCsv[i];
+            const team = row[0];
+
+            if(!team) continue;
+
+            teams.push(team);
+
+            pointsData[team] = cumulative(
+                totalCols.map(c => safe(row[c.index]))
+            );
+
+            subsData[team] = cumulative(
+                subsCols.map(c => safe(row[c.index]))
+            );
+
+            playersData[team] =
+                playerCols.map(c => safe(row[c.index]));
+        }
+
+        for(let i=1;i<cvcCsv.length;i++){
+
+            const row = cvcCsv[i];
+            const team = row[0];
+
+            if(!team) continue;
+
+            captainData[team] =
+                captainCols.map(c => safe(row[c.index]));
+
+            viceData[team] =
+                viceCols.map(c => safe(row[c.index]));
+
+            combinedData[team] =
+                captainData[team].map((v, idx) =>
+                    v + viceData[team][idx]
+                );
+        }
+
+        for(let i=1;i<overallCsv.length;i++){
+
+            const row = overallCsv[i];
+            const team = row[0];
+
+            if(!team) continue;
+
+            parseBoosterString(team, row[boosterCol]);
+        }
+
+        top5 = Object.keys(pointsData)
+            .sort((a,b)=>(pointsData[b].slice(-1)[0] || 0)
+            - (pointsData[a].slice(-1)[0] || 0))
+            .slice(0,5);
+
+        createTeamCheckboxes();
+
+        updateCharts();
+
+        renderBoosterCharts();
+
+        document.getElementById('status')
+            .innerText = 'Dashboard loaded successfully';
+
+    }catch(err){
+
+        console.error(err);
+
+        document.getElementById('status')
+            .innerText =
+                'Failed to load dashboard data';
+    }
+}
+
+loadDashboard();
 
 </script>
 
