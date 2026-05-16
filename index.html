@@ -452,10 +452,6 @@ function createSingleBoosterChart(config, teams, values, games){
                 color:config.color
             },
 
-            text: teams,
-
-            textposition:'outside',
-
             hovertemplate:
                 '<b>%{x}</b><br>' +
                 'Game: %{customdata}<br>' +
@@ -467,16 +463,25 @@ function createSingleBoosterChart(config, teams, values, games){
 
         {
             title:config.label,
-
+        
             xaxis:{
                 title:'Teams',
                 type:'category',
                 tickangle:-45,
-                automargin:true
+                automargin:true,
+                categoryorder:'array',
+                categoryarray: teams,
+                tickmode:'array',
+                tickvals: teams,
+                ticktext: teams
             },
-
+        
             yaxis:{
                 title:'Booster Points'
+            },
+        
+            margin:{
+                b:150
             }
         },
 
