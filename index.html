@@ -436,6 +436,20 @@ function updateCharts(){
 
 function createSingleBoosterChart(config, teams, values, games){
 
+    const teamColors = [
+        '#1f77b4',
+        '#ff7f0e',
+        '#2ca02c',
+        '#d62728',
+        '#9467bd',
+        '#8c564b',
+        '#e377c2',
+        '#7f7f7f',
+        '#bcbd22',
+        '#17becf',
+        '#393b79'
+    ];
+
     Plotly.react(
 
         config.id,
@@ -449,8 +463,10 @@ function createSingleBoosterChart(config, teams, values, games){
             type:'bar',
 
             marker:{
-                color:config.color
-            },
+                color: teams.map((_, idx) =>
+                    teamColors[idx % teamColors.length]
+                )
+            }
 
             hovertemplate:
                 '<b>%{x}</b><br>' +
@@ -463,17 +479,12 @@ function createSingleBoosterChart(config, teams, values, games){
 
         {
             title:config.label,
-        
+
             xaxis:{
                 title:'Teams',
                 type:'category',
-                tickangle:-45,
-                automargin:true,
-                categoryorder:'array',
-                categoryarray: teams,
-                tickmode:'array',
-                tickvals: teams,
-                ticktext: teams
+                tickangle:-35,
+                automargin:true
             },
         
             yaxis:{
@@ -502,14 +513,19 @@ function renderBoosterCharts(){
                 const values = [];
                 const gamesArr = [];
 
-                Object.keys(boosterData[booster] || {})
-                    .forEach(team => {
-
+                teams.forEach(team => {
                         const entries = boosterData[booster][team];
 
                         const item = entries[index];
 
-                        teamsArr.push(team);
+                        if(
+                            !team ||
+                            !isNaN(team)
+                        ){
+                            return;
+                        }
+                        
+                        teamsArr.push(String(team));
 
                         if(item){
                             values.push(item.points);
