@@ -442,9 +442,9 @@ function createSingleBoosterChart(config, teams, values, games){
 
         [{
 
-            x:teams,
+            x: teams.map(t => String(t)),
 
-            y:values,
+            y: values,
 
             type:'bar',
 
@@ -452,12 +452,16 @@ function createSingleBoosterChart(config, teams, values, games){
                 color:config.color
             },
 
-            text:games,
+            text: teams,
+
+            textposition:'outside',
 
             hovertemplate:
                 '<b>%{x}</b><br>' +
-                'Game: %{text}<br>' +
-                'Points: %{y}<extra></extra>'
+                'Game: %{customdata}<br>' +
+                'Points: %{y}<extra></extra>',
+
+            customdata: games
 
         }],
 
@@ -465,7 +469,10 @@ function createSingleBoosterChart(config, teams, values, games){
             title:config.label,
 
             xaxis:{
-                title:'Teams'
+                title:'Teams',
+                type:'category',
+                tickangle:-45,
+                automargin:true
             },
 
             yaxis:{
