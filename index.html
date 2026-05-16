@@ -67,7 +67,7 @@ button:hover{
 
 <body>
 
-<h1>IPL Fantasy 2026 Complete Analytics Dashboard</h1>
+<h1>IPL Fantasy 2026 Dashboard</h1>
 
 <div class="panel">
 
@@ -556,6 +556,22 @@ async function loadDashboard(){
 
         const boosterCol =
             overallHeaders.findIndex(h => h === 'Booster');
+        
+        const teamCol =
+            overallHeaders.findIndex(h =>
+                h.toLowerCase().includes('team')
+            );
+        
+        for(let i=1;i<overallCsv.length;i++){
+        
+            const row = overallCsv[i];
+        
+            const team = row[teamCol];
+        
+            if(!team) continue;
+        
+            parseBoosterString(team, row[boosterCol]);
+        }
 
         games = totalCols.map(c => `G${c.game}`);
 
