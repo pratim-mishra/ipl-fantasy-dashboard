@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+
 <title>IPL Fantasy 2026 Dashboard</title>
 
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
+
 body{
     font-family:Arial;
     background:#f4f6f9;
@@ -63,6 +66,7 @@ button:hover{
 }
 
 </style>
+
 </head>
 
 <body>
@@ -115,7 +119,8 @@ button:hover{
 
 <script>
 
-const SHEET_ID = '1d0vJWMrF3BFom02mBAzaYZEsx8qUq0wEEw9F64zzN8s';
+const SHEET_ID =
+'1d0vJWMrF3BFom02mBAzaYZEsx8qUq0wEEw9F64zzN8s';
 
 const GAME_TOTAL_URL =
 `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Game_Total`;
@@ -142,33 +147,47 @@ let boosterData = {};
 const boosterChartConfig = {
 
     'Double Power':[
-        {id:'doublePower1', label:'Double Power 1', color:'#1f77b4'},
-        {id:'doublePower2', label:'Double Power 2', color:'#4fa3ff'}
+        {id:'doublePower1', label:'Double Power 1'},
+        {id:'doublePower2', label:'Double Power 2'}
     ],
 
     'Foreign Stars':[
-        {id:'foreignStars1', label:'Foreign Stars 1', color:'#ff7f0e'},
-        {id:'foreignStars2', label:'Foreign Stars 2', color:'#ffb266'}
+        {id:'foreignStars1', label:'Foreign Stars 1'},
+        {id:'foreignStars2', label:'Foreign Stars 2'}
     ],
 
     'Indian Warriors':[
-        {id:'indianWarriors1', label:'Indian Warriors 1', color:'#2ca02c'},
-        {id:'indianWarriors2', label:'Indian Warriors 2', color:'#7bd67b'}
+        {id:'indianWarriors1', label:'Indian Warriors 1'},
+        {id:'indianWarriors2', label:'Indian Warriors 2'}
     ],
 
     'Triple Captain':[
-        {id:'tripleCaptain1', label:'Triple Captain 1', color:'#d62728'},
-        {id:'tripleCaptain2', label:'Triple Captain 2', color:'#ff7a7a'}
+        {id:'tripleCaptain1', label:'Triple Captain 1'},
+        {id:'tripleCaptain2', label:'Triple Captain 2'}
     ],
 
     'Free Hit':[
-        {id:'freeHit', label:'Free Hit', color:'#9467bd'}
+        {id:'freeHit', label:'Free Hit'}
     ],
 
     'Wild Card':[
-        {id:'wildCard', label:'Wild Card', color:'#8c564b'}
+        {id:'wildCard', label:'Wild Card'}
     ]
 };
+
+const teamColors = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+    '#393b79'
+];
 
 async function fetchCSV(url){
 
@@ -295,7 +314,6 @@ function renderLineChart(id, title, yTitle, traces){
     Plotly.react(id, traces, {
 
         title,
-
         hovermode:'x unified',
 
         xaxis:{
@@ -315,13 +333,15 @@ function renderLineChart(id, title, yTitle, traces){
 
 function createTeamCheckboxes(){
 
-    const container = document.getElementById('teamContainer');
+    const container =
+        document.getElementById('teamContainer');
 
     container.innerHTML = '';
 
     teams.forEach(team => {
 
-        const label = document.createElement('label');
+        const label =
+            document.createElement('label');
 
         label.innerHTML = `
             <input type="checkbox"
@@ -338,8 +358,9 @@ function createTeamCheckboxes(){
 
 function getSelectedTeams(){
 
-    return [...document.querySelectorAll('.team-checkbox:checked')]
-        .map(cb => cb.value);
+    return [...document.querySelectorAll(
+        '.team-checkbox:checked'
+    )].map(cb => cb.value);
 }
 
 function selectAllTeams(){
@@ -434,21 +455,12 @@ function updateCharts(){
     );
 }
 
-function createSingleBoosterChart(config, teams, values, games){
-
-    const teamColors = [
-        '#1f77b4',
-        '#ff7f0e',
-        '#2ca02c',
-        '#d62728',
-        '#9467bd',
-        '#8c564b',
-        '#e377c2',
-        '#7f7f7f',
-        '#bcbd22',
-        '#17becf',
-        '#393b79'
-    ];
+function createSingleBoosterChart(
+    config,
+    teamsArr,
+    values,
+    gamesArr
+){
 
     Plotly.react(
 
@@ -456,28 +468,29 @@ function createSingleBoosterChart(config, teams, values, games){
 
         [{
 
-            x: teams.map(t => String(t)),
+            x:teamsArr,
 
-            y: values,
+            y:values,
 
             type:'bar',
 
             marker:{
-                color: teams.map((_, idx) =>
+                color:teamsArr.map((_, idx)=>
                     teamColors[idx % teamColors.length]
                 )
-            }
+            },
+
+            customdata:gamesArr,
 
             hovertemplate:
                 '<b>%{x}</b><br>' +
                 'Game: %{customdata}<br>' +
-                'Points: %{y}<extra></extra>',
-
-            customdata: games
+                'Points: %{y}<extra></extra>'
 
         }],
 
         {
+
             title:config.label,
 
             xaxis:{
@@ -486,14 +499,15 @@ function createSingleBoosterChart(config, teams, values, games){
                 tickangle:-35,
                 automargin:true
             },
-        
+
             yaxis:{
                 title:'Booster Points'
             },
-        
+
             margin:{
                 b:150
             }
+
         },
 
         {responsive:true}
@@ -505,7 +519,8 @@ function renderBoosterCharts(){
     Object.keys(boosterChartConfig)
         .forEach(booster => {
 
-            const configs = boosterChartConfig[booster];
+            const configs =
+                boosterChartConfig[booster];
 
             configs.forEach((cfg, index) => {
 
@@ -514,27 +529,34 @@ function renderBoosterCharts(){
                 const gamesArr = [];
 
                 teams.forEach(team => {
-                        const entries = boosterData[booster][team];
 
-                        const item = entries[index];
+                    if(
+                        !team ||
+                        !isNaN(team)
+                    ){
+                        return;
+                    }
 
-                        if(
-                            !team ||
-                            !isNaN(team)
-                        ){
-                            return;
-                        }
-                        
-                        teamsArr.push(String(team));
+                    const entries =
+                        boosterData[booster]?.[team] || [];
 
-                        if(item){
-                            values.push(item.points);
-                            gamesArr.push(item.game);
-                        }else{
-                            values.push(0);
-                            gamesArr.push('-');
-                        }
-                    });
+                    const item = entries[index];
+
+                    teamsArr.push(String(team));
+
+                    if(item){
+
+                        values.push(item.points);
+                        gamesArr.push(item.game);
+
+                    }else{
+
+                        values.push(0);
+                        gamesArr.push('-');
+
+                    }
+
+                });
 
                 createSingleBoosterChart(
                     cfg,
@@ -542,8 +564,11 @@ function renderBoosterCharts(){
                     values,
                     gamesArr
                 );
+
             });
+
         });
+
 }
 
 async function loadDashboard(){
@@ -551,45 +576,51 @@ async function loadDashboard(){
     try{
 
         document.getElementById('status')
-            .innerText = 'Loading Google Sheet data...';
+            .innerText =
+            'Loading Google Sheet data...';
 
         initializeBoosterData();
 
-        const gameCsv = await fetchCSV(GAME_TOTAL_URL);
-        const cvcCsv = await fetchCSV(CVC_URL);
-        const overallCsv = await fetchCSV(OVERALL_URL);
+        const gameCsv =
+            await fetchCSV(GAME_TOTAL_URL);
+
+        const cvcCsv =
+            await fetchCSV(CVC_URL);
+
+        const overallCsv =
+            await fetchCSV(OVERALL_URL);
 
         const gameHeaders = gameCsv[0];
         const cvcHeaders = cvcCsv[0];
         const overallHeaders = overallCsv[0];
 
-        const totalCols = extractColumns(gameHeaders, 'Total');
-        const subsCols = extractColumns(gameHeaders, 'Subs');
-        const playerCols = extractColumns(gameHeaders, 'Players');
+        const totalCols =
+            extractColumns(gameHeaders, 'Total');
 
-        const captainCols = extractColumns(cvcHeaders, ' C');
-        const viceCols = extractColumns(cvcHeaders, 'VC');
+        const subsCols =
+            extractColumns(gameHeaders, 'Subs');
+
+        const playerCols =
+            extractColumns(gameHeaders, 'Players');
+
+        const captainCols =
+            extractColumns(cvcHeaders, ' C');
+
+        const viceCols =
+            extractColumns(cvcHeaders, 'VC');
 
         const boosterCol =
-            overallHeaders.findIndex(h => h === 'Booster');
-        
+            overallHeaders.findIndex(
+                h => h === 'Booster'
+            );
+
         const teamCol =
             overallHeaders.findIndex(h =>
                 h.toLowerCase().includes('team')
             );
-        
-        for(let i=1;i<overallCsv.length;i++){
-        
-            const row = overallCsv[i];
-        
-            const team = row[teamCol];
-        
-            if(!team) continue;
-        
-            parseBoosterString(team, row[boosterCol]);
-        }
 
-        games = totalCols.map(c => `G${c.game}`);
+        games =
+            totalCols.map(c => `G${c.game}`);
 
         pointsData = {};
         subsData = {};
@@ -608,16 +639,24 @@ async function loadDashboard(){
 
             teams.push(team);
 
-            pointsData[team] = cumulative(
-                totalCols.map(c => safe(row[c.index]))
-            );
+            pointsData[team] =
+                cumulative(
+                    totalCols.map(c =>
+                        safe(row[c.index])
+                    )
+                );
 
-            subsData[team] = cumulative(
-                subsCols.map(c => safe(row[c.index]))
-            );
+            subsData[team] =
+                cumulative(
+                    subsCols.map(c =>
+                        safe(row[c.index])
+                    )
+                );
 
             playersData[team] =
-                playerCols.map(c => safe(row[c.index]));
+                playerCols.map(c =>
+                    safe(row[c.index])
+                );
         }
 
         for(let i=1;i<cvcCsv.length;i++){
@@ -628,13 +667,18 @@ async function loadDashboard(){
             if(!team) continue;
 
             captainData[team] =
-                captainCols.map(c => safe(row[c.index]));
+                captainCols.map(c =>
+                    safe(row[c.index])
+                );
 
             viceData[team] =
-                viceCols.map(c => safe(row[c.index]));
+                viceCols.map(c =>
+                    safe(row[c.index])
+                );
 
             combinedData[team] =
-                captainData[team].map((v, idx) =>
+                captainData[team].map(
+                    (v, idx) =>
                     v + viceData[team][idx]
                 );
         }
@@ -642,16 +686,23 @@ async function loadDashboard(){
         for(let i=1;i<overallCsv.length;i++){
 
             const row = overallCsv[i];
-            const team = row[0];
+
+            const team = row[teamCol];
 
             if(!team) continue;
 
-            parseBoosterString(team, row[boosterCol]);
+            parseBoosterString(
+                team,
+                row[boosterCol]
+            );
         }
 
         top5 = Object.keys(pointsData)
-            .sort((a,b)=>(pointsData[b].slice(-1)[0] || 0)
-            - (pointsData[a].slice(-1)[0] || 0))
+            .sort((a,b)=>
+                (pointsData[b].slice(-1)[0] || 0)
+                -
+                (pointsData[a].slice(-1)[0] || 0)
+            )
             .slice(0,5);
 
         createTeamCheckboxes();
@@ -661,7 +712,8 @@ async function loadDashboard(){
         renderBoosterCharts();
 
         document.getElementById('status')
-            .innerText = 'Dashboard loaded successfully';
+            .innerText =
+            'Dashboard loaded successfully';
 
     }catch(err){
 
@@ -669,7 +721,7 @@ async function loadDashboard(){
 
         document.getElementById('status')
             .innerText =
-                'Failed to load dashboard data';
+            'Failed to load dashboard data';
     }
 }
 
