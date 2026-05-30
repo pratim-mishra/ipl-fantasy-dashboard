@@ -100,20 +100,12 @@ button:hover{
 
 <div class="grid2">
 
-<div class="panel"><div id="doublePower1" class="chart"></div></div>
-<div class="panel"><div id="doublePower2" class="chart"></div></div>
-
-<div class="panel"><div id="foreignStars1" class="chart"></div></div>
-<div class="panel"><div id="foreignStars2" class="chart"></div></div>
-
-<div class="panel"><div id="indianWarriors1" class="chart"></div></div>
-<div class="panel"><div id="indianWarriors2" class="chart"></div></div>
-
-<div class="panel"><div id="tripleCaptain1" class="chart"></div></div>
-<div class="panel"><div id="tripleCaptain2" class="chart"></div></div>
-
-<div class="panel"><div id="freeHit" class="chart"></div></div>
-<div class="panel"><div id="wildCard" class="chart"></div></div>
+<div class="panel"><div id="doublePowerChart" class="chart"></div></div>
+<div class="panel"><div id="foreignStarsChart" class="chart"></div></div>
+<div class="panel"><div id="indianWarriorsChart" class="chart"></div></div>
+<div class="panel"><div id="tripleCaptainChart" class="chart"></div></div>
+<div class="panel"><div id="freeHitChart" class="chart"></div></div>
+<div class="panel"><div id="wildCardChart" class="chart"></div></div>
 
 </div>
 
@@ -145,34 +137,12 @@ let combinedData = {};
 let boosterData = {};
 
 const boosterChartConfig = {
-
-    'Double Power':[
-        {id:'doublePower1', label:'Double Power 1'},
-        {id:'doublePower2', label:'Double Power 2'}
-    ],
-
-    'Foreign Stars':[
-        {id:'foreignStars1', label:'Foreign Stars 1'},
-        {id:'foreignStars2', label:'Foreign Stars 2'}
-    ],
-
-    'Indian Warriors':[
-        {id:'indianWarriors1', label:'Indian Warriors 1'},
-        {id:'indianWarriors2', label:'Indian Warriors 2'}
-    ],
-
-    'Triple Captain':[
-        {id:'tripleCaptain1', label:'Triple Captain 1'},
-        {id:'tripleCaptain2', label:'Triple Captain 2'}
-    ],
-
-    'Free Hit':[
-        {id:'freeHit', label:'Free Hit'}
-    ],
-
-    'Wild Card':[
-        {id:'wildCard', label:'Wild Card'}
-    ]
+'Double Power':[{id:'doublePowerChart', label:'Double Power'}],
+'Foreign Stars':[{id:'foreignStarsChart', label:'Foreign Stars'}],
+'Indian Warriors':[{id:'indianWarriorsChart', label:'Indian Warriors'}],
+'Triple Captain':[{id:'tripleCaptainChart', label:'Triple Captain'}],
+'Free Hit':[{id:'freeHitChart', label:'Free Hit'}],
+'Wild Card':[{id:'wildCardChart', label:'Wild Card'}]
 };
 
 const teamColors = [
@@ -516,62 +486,63 @@ function createSingleBoosterChart(
 
 function renderBoosterCharts(){
 
-    Object.keys(boosterChartConfig)
-        .forEach(booster => {
+Object.keys(boosterChartConfig).forEach(booster=>{
 
-            const configs =
-                boosterChartConfig[booster];
+ const cfg = boosterChartConfig[booster][0];
 
-            configs.forEach((cfg, index) => {
+ const teamsArr=[];
+ const games1=[];
+ const games2=[];
+ const values1=[];
+ const values2=[];
 
-                const teamsArr = [];
-                const values = [];
-                const gamesArr = [];
+ teams.forEach(team=>{
 
-                teams.forEach(team => {
+   const entries = boosterData[booster]?.[team] || [];
 
-                    if(
-                        !team ||
-                        !isNaN(team)
-                    ){
-                        return;
-                    }
+   teamsArr.push(team);
 
-                    const entries =
-                        boosterData[booster]?.[team] || [];
+   values1.push(entries[0]?.points || 0);
+   values2.push(entries[1]?.points || 0);
 
-                    const item = entries[index];
+   games1.push(entries[0]?.game || '-');
+   games2.push(entries[1]?.game || '-');
+ });
 
-                    teamsArr.push(String(team));
+ const traces=[{
+   x:teamsArr,
+   y:values1,
+   name:'Booster 1',
+   type:'bar',
+   marker:{color:teamColors.slice(0,teamsArr.length)},
+   customdata:games1,
+   hovertemplate:'<b>%{x}</b><br>Booster 1<br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
+ }];
 
-                    if(item){
+ if(['Double Power','Foreign Stars','Indian Warriors','Triple Captain'].includes(booster)){
+   traces.push({
+     x:teamsArr,
+     y:values2,
+     name:'Booster 2',
+     type:'bar',
+     marker:{opacity:0.65},
+     customdata:games2,
+     hovertemplate:'<b>%{x}</b><br>Booster 2<br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
+   });
+ }
 
-                        values.push(item.points);
-                        gamesArr.push(item.game);
+ Plotly.react(cfg.id,traces,{
+   template:'plotly_dark',
+   title:cfg.label,
+   barmode:'group',
+   xaxis:{title:'Teams',tickangle:-35},
+   yaxis:{title:'Booster Points'}
+ },{responsive:true});
 
-                    }else{
-
-                        values.push(0);
-                        gamesArr.push('-');
-
-                    }
-
-                });
-
-                createSingleBoosterChart(
-                    cfg,
-                    teamsArr,
-                    values,
-                    gamesArr
-                );
-
-            });
-
-        });
+});
 
 }
-
-async function loadDashboard(){
+$1(){
 
     try{
 
