@@ -159,6 +159,20 @@ const teamColors = [
     '#393b79'
 ];
 
+const TEAM_COLORS = {
+    "RoyalRajRinhos RRXI":"#1f77b4",
+    "Hell Dhurandars":"#ff7f0e",
+    "Dada Dragons":"#2ca02c",
+    "Dhurundhar":"#d62728",
+    "RDX":"#9467bd",
+    "Dadagiri":"#8c564b",
+    "Blue Scrappers":"#e377c2",
+    "Maybe 11":"#7f7f7f",
+    "Shubham's Titans":"#bcbd22",
+    "Original admin 11":"#17becf",
+    "Namma RCB 11":"#393b79"
+};
+
 async function fetchCSV(url){
 
     const response = await fetch(url);
@@ -509,6 +523,9 @@ Object.keys(boosterChartConfig).forEach(booster=>{
    y:values1,
    name:'Booster 1',
    type:'bar',
+   marker:{
+      color: teamsArr.map(t => TEAM_COLORS[t] || '#1f77b4')
+   },
    customdata:games1,
    hovertemplate:'<b>%{x}</b><br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
  }];
@@ -519,6 +536,10 @@ Object.keys(boosterChartConfig).forEach(booster=>{
      y:values2,
      name:'Booster 2',
      type:'bar',
+     marker:{
+        color: teamsArr.map(t => TEAM_COLORS[t] || '#1f77b4'),
+        opacity:0.75
+     },
      customdata:games2,
      hovertemplate:'<b>%{x}</b><br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
    });
