@@ -489,22 +489,17 @@ function renderBoosterCharts(){
 Object.keys(boosterChartConfig).forEach(booster=>{
 
  const cfg = boosterChartConfig[booster][0];
-
  const teamsArr=[];
- const games1=[];
- const games2=[];
  const values1=[];
  const values2=[];
+ const games1=[];
+ const games2=[];
 
  teams.forEach(team=>{
-
    const entries = boosterData[booster]?.[team] || [];
-
    teamsArr.push(team);
-
    values1.push(entries[0]?.points || 0);
    values2.push(entries[1]?.points || 0);
-
    games1.push(entries[0]?.game || '-');
    games2.push(entries[1]?.game || '-');
  });
@@ -514,9 +509,8 @@ Object.keys(boosterChartConfig).forEach(booster=>{
    y:values1,
    name:'Booster 1',
    type:'bar',
-   marker:{color:teamColors.slice(0,teamsArr.length)},
    customdata:games1,
-   hovertemplate:'<b>%{x}</b><br>Booster 1<br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
+   hovertemplate:'<b>%{x}</b><br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
  }];
 
  if(['Double Power','Foreign Stars','Indian Warriors','Triple Captain'].includes(booster)){
@@ -525,14 +519,12 @@ Object.keys(boosterChartConfig).forEach(booster=>{
      y:values2,
      name:'Booster 2',
      type:'bar',
-     marker:{opacity:0.65},
      customdata:games2,
-     hovertemplate:'<b>%{x}</b><br>Booster 2<br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
+     hovertemplate:'<b>%{x}</b><br>Game:%{customdata}<br>Points:%{y}<extra></extra>'
    });
  }
 
  Plotly.react(cfg.id,traces,{
-   template:'plotly_dark',
    title:cfg.label,
    barmode:'group',
    xaxis:{title:'Teams',tickangle:-35},
@@ -542,7 +534,8 @@ Object.keys(boosterChartConfig).forEach(booster=>{
 });
 
 }
-$1(){
+
+async function loadDashboard(){
 
     try{
 
