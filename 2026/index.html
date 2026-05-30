@@ -85,10 +85,13 @@ body.dark button{background:#334155}
 <div class="kpi-grid">
 <div class="kpi-card"><h3>🏆 Leader</h3><div id="kpiLeader">-</div></div>
 <div class="kpi-card"><h3>📈 Highest Points</h3><div id="kpiPoints">-</div></div>
-<div class="kpi-card"><h3>🔄 Most Subs</h3><div id="kpiSubs">-</div></div>
-<div class="kpi-card"><h3>⚡ Best Booster</h3><div id="kpiBooster">-</div></div>
+<div class="kpi-card"><h3>⚡ Double Power</h3><div id="kpiDP">-</div></div>
+<div class="kpi-card"><h3>⭐ Foreign Stars</h3><div id="kpiFS">-</div></div>
+<div class="kpi-card"><h3>🔥 Indian Warriors</h3><div id="kpiIW">-</div></div>
+<div class="kpi-card"><h3>👑 Triple Captain</h3><div id="kpiTC">-</div></div>
+<div class="kpi-card"><h3>🎯 Free Hit</h3><div id="kpiFH">-</div></div>
+<div class="kpi-card"><h3>🎲 Wild Card</h3><div id="kpiWC">-</div></div>
 </div>
-
 
 <div class="panel">
 
@@ -789,31 +792,55 @@ function toggleTheme(){
 })();
 
 function updateKPIs(){
- const ranked=Object.keys(pointsData).map(t=>({
-   team:t,
-   pts:(pointsData[t]||[]).slice(-1)[0]||0,
-   subs:(subsData[t]||[]).slice(-1)[0]||0
- })).sort((a,b)=>b.pts-a.pts);
+    document.getElementById('kpiDP')
+    .innerText =
+    getBestBooster('Double Power');
 
- if(!ranked.length)return;
+document.getElementById('kpiFS')
+    .innerText =
+    getBestBooster('Foreign Stars');
 
- document.getElementById('kpiLeader').innerText=ranked[0].team;
- document.getElementById('kpiPoints').innerText=ranked[0].pts;
+document.getElementById('kpiIW')
+    .innerText =
+    getBestBooster('Indian Warriors');
 
- const subsLeader=[...ranked].sort((a,b)=>b.subs-a.subs)[0];
- document.getElementById('kpiSubs').innerText=subsLeader.team+' ('+subsLeader.subs+')';
+document.getElementById('kpiTC')
+    .innerText =
+    getBestBooster('Triple Captain');
 
- let best='-'; let pts=0;
- Object.keys(boosterData).forEach(b=>{
-   Object.values(boosterData[b]||{}).forEach(arr=>{
-     (arr||[]).forEach(x=>{
-       if((x.points||0)>pts){pts=x.points; best=b+' '+x.game;}
-     });
-   });
- });
- document.getElementById('kpiBooster').innerText=best+' ('+pts+')';
+document.getElementById('kpiFH')
+    .innerText =
+    getBestBooster('Free Hit');
+
+document.getElementById('kpiWC')
+    .innerText =
+    getBestBooster('Wild Card');
 }
+    
+function getBestBooster(boosterName){
 
+    let bestTeam = '-';
+    let bestPoints = 0;
+
+    Object.entries(
+        boosterData[boosterName] || {}
+    ).forEach(([team, entries]) => {
+
+        entries.forEach(entry => {
+
+            if(entry.points > bestPoints){
+
+                bestPoints = entry.points;
+                bestTeam = team;
+
+            }
+
+        });
+
+    });
+
+    return `${bestTeam} (${bestPoints})`;
+}
 
 buildMobileTabs();
 loadDashboard();
