@@ -374,7 +374,58 @@ function clearTeams(){
 }
 
 function reloadDashboard(){
-    loadDashboard();
+    
+function buildMobileTabs(){
+
+    if(window.innerWidth > 768) return;
+
+    if(document.getElementById('mobileTabs')){
+        return;
+    }
+
+    const tabs = document.createElement('div');
+    tabs.id = 'mobileTabs';
+    tabs.style.cssText='position:sticky;top:0;background:#111827;padding:10px;z-index:1000';
+
+    tabs.innerHTML = `
+        <button onclick="showSection('pointsChart')">Points</button>
+        <button onclick="showSection('subsChart')">Subs</button>
+        <button onclick="showSection('boosters')">Boosters</button>
+        <button onclick="showAllSections()">All</button>
+    `;
+
+    document.body.insertBefore(tabs, document.body.firstChild);
+}
+
+function showAllSections(){
+ document.querySelectorAll('.panel').forEach(p=>p.style.display='block');
+}
+
+function showSection(section){
+
+    document.querySelectorAll('.panel').forEach(panel => {
+        panel.style.display = 'none';
+    });
+
+    if(section === 'pointsChart'){
+        document.getElementById('pointsChart').closest('.panel').style.display='block';
+    }
+    else if(section === 'subsChart'){
+        document.getElementById('subsChart').closest('.panel').style.display='block';
+    }
+    else if(section === 'boosters'){
+        [
+            'doublePowerChart','foreignStarsChart','indianWarriorsChart',
+            'tripleCaptainChart','freeHitChart','wildCardChart'
+        ].forEach(id=>{
+            const c=document.getElementById(id);
+            if(c) c.closest('.panel').style.display='block';
+        });
+    }
+}
+
+buildMobileTabs();
+loadDashboard();
 }
 
 function updateCharts(){
@@ -710,6 +761,57 @@ async function loadDashboard(){
     }
 }
 
+
+function buildMobileTabs(){
+
+    if(window.innerWidth > 768) return;
+
+    if(document.getElementById('mobileTabs')){
+        return;
+    }
+
+    const tabs = document.createElement('div');
+    tabs.id = 'mobileTabs';
+    tabs.style.cssText='position:sticky;top:0;background:#111827;padding:10px;z-index:1000';
+
+    tabs.innerHTML = `
+        <button onclick="showSection('pointsChart')">Points</button>
+        <button onclick="showSection('subsChart')">Subs</button>
+        <button onclick="showSection('boosters')">Boosters</button>
+        <button onclick="showAllSections()">All</button>
+    `;
+
+    document.body.insertBefore(tabs, document.body.firstChild);
+}
+
+function showAllSections(){
+ document.querySelectorAll('.panel').forEach(p=>p.style.display='block');
+}
+
+function showSection(section){
+
+    document.querySelectorAll('.panel').forEach(panel => {
+        panel.style.display = 'none';
+    });
+
+    if(section === 'pointsChart'){
+        document.getElementById('pointsChart').closest('.panel').style.display='block';
+    }
+    else if(section === 'subsChart'){
+        document.getElementById('subsChart').closest('.panel').style.display='block';
+    }
+    else if(section === 'boosters'){
+        [
+            'doublePowerChart','foreignStarsChart','indianWarriorsChart',
+            'tripleCaptainChart','freeHitChart','wildCardChart'
+        ].forEach(id=>{
+            const c=document.getElementById(id);
+            if(c) c.closest('.panel').style.display='block';
+        });
+    }
+}
+
+buildMobileTabs();
 loadDashboard();
 
 </script>
