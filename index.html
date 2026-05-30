@@ -65,6 +65,13 @@ button:hover{
     gap:20px;
 }
 
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:#111827;color:#fff;padding:16px;border-radius:12px;text-align:center}
+.theme-toggle{position:fixed;top:10px;right:10px;z-index:9999}
+body.dark{background:#0f172a;color:#e5e7eb}
+body.dark .panel{background:#1e293b;color:#fff}
+@media(max-width:768px){.chart{height:350px!important}.grid2{grid-template-columns:1fr!important}}
 </style>
 
 </head>
@@ -72,6 +79,15 @@ button:hover{
 <body>
 
 <h1>IPL Fantasy 2026 Dashboard</h1>
+
+<button class="theme-toggle" onclick="toggleTheme()">🌙/☀️</button>
+<div class="kpi-grid">
+<div class="kpi-card"><h3>🏆 Leader</h3><div id="kpiLeader">-</div></div>
+<div class="kpi-card"><h3>📈 Points</h3><div id="kpiPoints">-</div></div>
+<div class="kpi-card"><h3>🔄 Most Subs</h3><div id="kpiSubs">-</div></div>
+<div class="kpi-card"><h3>⚡ Best Booster</h3><div id="kpiBooster">-</div></div>
+</div>
+
 
 <div class="panel">
 
@@ -424,6 +440,34 @@ function showSection(section){
     }
 }
 
+function toggleTheme(){document.body.classList.toggle('dark');}
+
+function updateKPIs(){
+ const ranked=Object.keys(pointsData).map(t=>({
+   team:t,
+   pts:(pointsData[t]||[]).slice(-1)[0]||0,
+   subs:(subsData[t]||[]).slice(-1)[0]||0
+ })).sort((a,b)=>b.pts-a.pts);
+
+ if(!ranked.length)return;
+
+ document.getElementById('kpiLeader').innerText=ranked[0].team;
+ document.getElementById('kpiPoints').innerText=ranked[0].pts;
+
+ const s=[...ranked].sort((a,b)=>b.subs-a.subs)[0];
+ document.getElementById('kpiSubs').innerText=s.team+' ('+s.subs+')';
+
+ let bestName='-'; let bestPts=0;
+ Object.keys(boosterData).forEach(b=>{
+   Object.values(boosterData[b]).forEach(arr=>{
+      arr.forEach(x=>{
+        if((x.points||0)>bestPts){bestPts=x.points;bestName=b+' '+x.game;}
+      });
+   });
+ });
+ document.getElementById('kpiBooster').innerText=bestName+' ('+bestPts+')';
+}
+
 buildMobileTabs();
 loadDashboard();
 }
@@ -746,6 +790,7 @@ async function loadDashboard(){
         updateCharts();
 
         renderBoosterCharts();
+        updateKPIs();
 
         document.getElementById('status')
             .innerText =
