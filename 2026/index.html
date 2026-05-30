@@ -792,29 +792,47 @@ function toggleTheme(){
 })();
 
 function updateKPIs(){
+
+    const ranked = Object.keys(pointsData)
+        .map(team => ({
+            team,
+            points: (pointsData[team] || []).slice(-1)[0] || 0
+        }))
+        .sort((a,b) => b.points - a.points);
+
+    if(ranked.length){
+
+        document.getElementById('kpiLeader')
+            .innerText = ranked[0].team;
+
+        document.getElementById('kpiPoints')
+            .innerText = ranked[0].points.toLocaleString();
+
+    }
+
     document.getElementById('kpiDP')
-    .innerText =
-    getBestBooster('Double Power');
+        .innerText =
+        getBestBooster('Double Power');
 
-document.getElementById('kpiFS')
-    .innerText =
-    getBestBooster('Foreign Stars');
+    document.getElementById('kpiFS')
+        .innerText =
+        getBestBooster('Foreign Stars');
 
-document.getElementById('kpiIW')
-    .innerText =
-    getBestBooster('Indian Warriors');
+    document.getElementById('kpiIW')
+        .innerText =
+        getBestBooster('Indian Warriors');
 
-document.getElementById('kpiTC')
-    .innerText =
-    getBestBooster('Triple Captain');
+    document.getElementById('kpiTC')
+        .innerText =
+        getBestBooster('Triple Captain');
 
-document.getElementById('kpiFH')
-    .innerText =
-    getBestBooster('Free Hit');
+    document.getElementById('kpiFH')
+        .innerText =
+        getBestBooster('Free Hit');
 
-document.getElementById('kpiWC')
-    .innerText =
-    getBestBooster('Wild Card');
+    document.getElementById('kpiWC')
+        .innerText =
+        getBestBooster('Wild Card');
 }
     
 function getBestBooster(boosterName){
